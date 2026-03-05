@@ -9,9 +9,17 @@ public class Player : MonoBehaviour
     [Header("Movement Variables")]
     public float speed;
     public float jumpForce;
+    public float jumpCutMultiplier = .5f;
+    public float normalGravity;
+    public float fallGravity;
+    public float jumpGravity;
 
     public int direction = 1;
-    public Vector2 moveInput;
+
+    //Inputs
+    private Vector2 moveInput;
+    private bool jumpPressed;
+    private bool jumpReleased;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -19,19 +27,61 @@ public class Player : MonoBehaviour
     public LayerMask groundLayer;
     private bool isGrounded;
 
+
+    private void Start()
+    {
+        rb.gravityScale = normalGravity;
+    }
+
     private void Update()
     {
-        CheckGrounded();
         Flip();
     }
 
     private void FixedUpdate()
     {
+        ApplyVariableGravity();
+        CheckGrounded();
+        HandleMovement();
+        HandleJump();
+    }
+
+    private void HandleMovement()
+    {
         float targetSpeed = moveInput.x * speed;
         rb.linearVelocity = new Vector2(targetSpeed, rb.linearVelocity.y);
     }
 
+    private void HandleJump()
+    {
+        if(jumpPressed && isGrounded) {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            jumpPressed = false;
+            jumpReleased = false;
+        }
+        if (jumpReleased) {
+            if (rb.linearVelocity.y > 0)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
+            }
+            jumpReleased = false;
+        }
+    }
 
+
+
+    void ApplyVariableGravity()
+    {
+        if(rb.linearVelocity.y < -0.1f) { 
+            rb.gravityScale = fallGravity;
+        }
+        else if(rb.linearVelocity.y > 0.1f) { 
+            rb.gravityScale = jumpGravity;
+        }
+        else { 
+            rb.gravityScale = normalGravity;
+        }
+    }
 
     void CheckGrounded()
     {
@@ -61,8 +111,12 @@ public class Player : MonoBehaviour
 
     public void OnJump (InputValue value)
     {
-        if (value.isPressed && isGrounded) {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        if (value.isPressed) {
+            jumpPressed = true;
+            jumpReleased = false;
+        }
+        else { 
+            jumpReleased = true;
         }
     }
     
