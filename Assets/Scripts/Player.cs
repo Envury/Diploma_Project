@@ -3,8 +3,10 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
+    [Header("Components")]
     public Rigidbody2D rb;
     public PlayerInput playerInput;
+    public Animator animator;
 
     [Header("Movement Variables")]
     public float speed;
@@ -36,6 +38,7 @@ public class Player : MonoBehaviour
     private void Update()
     {
         Flip();
+        HandleAnimations();
     }
 
     private void FixedUpdate()
@@ -68,7 +71,15 @@ public class Player : MonoBehaviour
         }
     }
 
+    void HandleAnimations()
+    {
+        animator.SetBool("isJumping", rb.linearVelocity.y > .1f);
 
+        animator.SetFloat("yVelocity", rb.linearVelocity.y);
+
+        animator.SetBool("isIdle", Mathf.Abs(moveInput.x) < .1f && isGrounded);
+        animator.SetBool("isRunning", Mathf.Abs(moveInput.x) > .1f && isGrounded);
+    }
 
     void ApplyVariableGravity()
     {
