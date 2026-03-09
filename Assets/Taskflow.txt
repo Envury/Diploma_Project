@@ -1,0 +1,18 @@
+18/03: 
+-delete doc.x and create a .md file instead
+-1 complete level
+-Enemy scripts with memory
+-enemyFightStyle class 
+	
+
+
+
+final showcase:
+-delete doc.x and create a .md file instead
+-3 complete level
+-3 Enemy scripts types
+-1 enemy controller script (enemyFightStyle class) 
+
+
+
+connect the two git projects
