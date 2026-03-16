@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
     public Rigidbody2D rb;
     public PlayerInput playerInput;
     public Animator animator;
+    public CapsuleCollider2D playerCollider;
 
     [Header("Movement Variables")]
     public float speed;
@@ -29,6 +30,25 @@ public class Player : MonoBehaviour
     public LayerMask groundLayer;
     private bool isGrounded;
 
+    [Header("Crouch Settings")]
+    public Transform headCheck;
+    public float headCheckRadius = .2f;
+
+    [Header("Slide Settings")]
+    public float slideDuration = .6f;
+    public float slideSpeed = 10f;
+    public float slideStopDuration = .2f;
+
+    public float slideHeight;
+    public Vector2 slideOffset;
+    public float normalHeight;
+    public Vector2 normalOffset;
+
+    private bool isSliding;
+    private bool slideInputLocked;
+    private float slideTimer;
+    private float slideStopTimer;
+
 
     private void Start()
     {
@@ -37,15 +57,25 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        Flip();
+        TryStandup();
+
+        if (!isSliding)
+            Flip();
+
         HandleAnimations();
+        HandleSlide();
     }
 
     private void FixedUpdate()
     {
         ApplyVariableGravity();
         CheckGrounded();
-        HandleMovement();
+
+        if (!isSliding)
+        {
+            HandleMovement();
+        }
+
         HandleJump();
     }
 
@@ -71,14 +101,89 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void HandleSlide() 
+    {
+        if (isSliding) { 
+            slideTimer -= Time.deltaTime;
+            rb.linearVelocity = new Vector2(slideSpeed * direction, rb.linearVelocity.y);
+
+            //If we are done sliding
+            if (slideTimer <= 0) { 
+                isSliding = false;
+                slideStopTimer = slideStopDuration;
+                TryStandup();
+            }
+        }
+
+        if(slideStopTimer > 0)
+        {
+            slideStopTimer -= Time.deltaTime;
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        }
+
+        //Start the Slide
+        if (isGrounded && moveInput.y < -.1f && !isSliding && !slideInputLocked)
+        {
+            isSliding = true;
+            slideInputLocked = true;
+            slideTimer = slideDuration;
+            SetColliderSlide();
+        }
+
+        if (slideStopTimer < 0 && moveInput.y >= -.1f)
+        {
+            slideInputLocked = false;
+        }
+    }
     void HandleAnimations()
     {
+        bool isCrouching = animator.GetBool("isCrouching");
+
         animator.SetBool("isJumping", rb.linearVelocity.y > .1f);
+        animator.SetBool("isSliding", isSliding);
 
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
 
-        animator.SetBool("isIdle", Mathf.Abs(moveInput.x) < .1f && isGrounded);
-        animator.SetBool("isRunning", Mathf.Abs(moveInput.x) > .1f && isGrounded);
+        bool isMoving = Mathf.Abs(moveInput.x) > .1f && isGrounded; 
+
+        animator.SetBool("isIdle", !isMoving && !isSliding && !isCrouching);
+        animator.SetBool("isRunning", isMoving && !isSliding && !isCrouching);
+    }
+
+
+
+    void SetColliderNormal()
+    {
+       playerCollider.size = new Vector2(playerCollider.size.x, normalHeight);
+       playerCollider.offset = normalOffset;
+    }
+
+    void SetColliderSlide()
+    {
+        playerCollider.size = new Vector2(playerCollider.size.x, slideHeight);
+        playerCollider.offset = slideOffset;
+    }
+
+    void TryStandup()
+    {
+        if (isSliding)
+        {
+            animator.SetBool("isSliding", false);
+            return;
+        }
+
+        bool canStandUp = !Physics2D.OverlapCircle(headCheck.position, headCheckRadius, groundLayer);
+
+        if (canStandUp)
+        {
+            SetColliderNormal();
+            animator.SetBool("isSliding", false);
+        }
+        else
+        {
+            SetColliderSlide();
+            animator.SetBool("isSliding", true);
+        }
     }
 
     void ApplyVariableGravity()
@@ -136,5 +241,8 @@ public class Player : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(headCheck.position, headCheckRadius);
     }
 }
