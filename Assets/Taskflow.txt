@@ -12,7 +12,15 @@ final showcase:
 -3 complete level
 -3 Enemy scripts types
 -1 enemy controller script (enemyFightStyle class) 
+-save/load systems
+-logging system
+Economics part
+Enviormental Protection part
+Workplace Safety part
 
 
+nice-to-haves:
+procedurally generated levels
+background using NPUA buildings
+login system
 
-connect the two git projects
