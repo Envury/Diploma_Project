@@ -161,7 +161,7 @@ public class Player : MonoBehaviour
 
         bool isMoving = Mathf.Abs(moveInput.x) > .1f && isGrounded; 
 
-        animator.SetBool("isIdle", !isMoving && !isSliding && !isCrouching);
+        animator.SetBool("isIdle", !isMoving && !isSliding && !isCrouching && !(rb.linearVelocity.y > .1f));
         animator.SetBool("isRunning", isMoving && !isSliding && !isCrouching);
     }
 
