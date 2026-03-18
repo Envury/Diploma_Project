@@ -30,9 +30,13 @@ public class Player : MonoBehaviour
     public LayerMask groundLayer;
     private bool isGrounded;
 
+
+
     [Header("Crouch Settings")]
     public Transform headCheck;
     public float headCheckRadius = .2f;
+
+
 
     [Header("Slide Settings")]
     public float slideDuration = .6f;
@@ -48,6 +52,8 @@ public class Player : MonoBehaviour
     private bool slideInputLocked;
     private float slideTimer;
     private float slideStopTimer;
+
+    private bool isCrouching;
 
 
     private void Start()
@@ -78,6 +84,10 @@ public class Player : MonoBehaviour
 
         HandleJump();
     }
+
+
+
+
 
     private void HandleMovement()
     {
@@ -122,7 +132,7 @@ public class Player : MonoBehaviour
         }
 
         //Start the Slide
-        if (isGrounded && moveInput.y < -.1f && !isSliding && !slideInputLocked)
+        if (isGrounded && isCrouching && Mathf.Abs(moveInput.x) > .1f && !isSliding && !slideInputLocked)
         {
             isSliding = true;
             slideInputLocked = true;
@@ -130,17 +140,22 @@ public class Player : MonoBehaviour
             SetColliderSlide();
         }
 
-        if (slideStopTimer < 0 && moveInput.y >= -.1f)
+        if (slideStopTimer < 0 && !isCrouching)
         {
             slideInputLocked = false;
         }
     }
+
+
+
+
     void HandleAnimations()
     {
         bool isCrouching = animator.GetBool("isCrouching");
 
         animator.SetBool("isJumping", rb.linearVelocity.y > .1f);
         animator.SetBool("isSliding", isSliding);
+        animator.SetBool("isCrouching", isCrouching);
 
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
 
@@ -149,6 +164,10 @@ public class Player : MonoBehaviour
         animator.SetBool("isIdle", !isMoving && !isSliding && !isCrouching);
         animator.SetBool("isRunning", isMoving && !isSliding && !isCrouching);
     }
+
+
+
+
 
 
 
@@ -168,21 +187,22 @@ public class Player : MonoBehaviour
     {
         if (isSliding)
         {
-            animator.SetBool("isSliding", false);
+            animator.SetBool("isCrouching", false);
             return;
         }
 
-        bool canStandUp = !Physics2D.OverlapCircle(headCheck.position, headCheckRadius, groundLayer);
+        bool shouldCrouch = isCrouching || Physics2D.OverlapCircle(headCheck.position, headCheckRadius, groundLayer);
 
-        if (canStandUp)
+
+        if (!shouldCrouch)
         {
             SetColliderNormal();
-            animator.SetBool("isSliding", false);
+            animator.SetBool("isCrouching", false);
         }
         else
         {
             SetColliderSlide();
-            animator.SetBool("isSliding", true);
+            animator.SetBool("isCrouching", true);
         }
     }
 
@@ -220,9 +240,19 @@ public class Player : MonoBehaviour
 
 
 
+
+
     public void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
+    }
+
+    public void OnCrouch (InputValue value)
+    {
+        if (value.isPressed) 
+            isCrouching = true;
+        else 
+            isCrouching = false;  
     }
 
     public void OnJump (InputValue value)
