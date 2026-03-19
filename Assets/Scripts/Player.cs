@@ -1,8 +1,17 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR;
 
 public class Player : MonoBehaviour
 {
+    public PlayerState currentState;
+    public PlayerIdleState idleState;
+    public PlayerJumpState jumpState;
+    public PlayerMoveState moveState;
+    public PlayerCrouchState crouchState;
+    public PlayerSlideState slideState;
+
+
     [Header("Components")]
     public Rigidbody2D rb;
     public PlayerInput playerInput;
@@ -20,15 +29,16 @@ public class Player : MonoBehaviour
     public int direction = 1;
 
     //Inputs
-    private Vector2 moveInput;
-    private bool jumpPressed;
-    private bool jumpReleased;
+    public Vector2 moveInput;
+    public bool jumpPressed;
+    public bool jumpReleased;
+    
 
     [Header("Ground Check")]
     public Transform groundCheck;
     public float groundCheckRadius;
     public LayerMask groundLayer;
-    private bool isGrounded;
+    public bool isGrounded;
 
 
 
@@ -49,101 +59,58 @@ public class Player : MonoBehaviour
     public Vector2 normalOffset;
 
     private bool isSliding;
-    private bool slideInputLocked;
-    private float slideTimer;
-    private float slideStopTimer;
 
-    private bool isCrouching;
+
+    public bool isCrouching;
+
+
+    private void Awake()
+    {
+        idleState = new PlayerIdleState(this);
+        jumpState = new PlayerJumpState(this);
+        moveState = new PlayerMoveState(this);
+        crouchState = new PlayerCrouchState(this);
+        slideState = new PlayerSlideState(this);
+    }
+
 
 
     private void Start()
     {
         rb.gravityScale = normalGravity;
+
+        ChangeState(idleState);
     }
 
     private void Update()
     {
-        TryStandup();
+        currentState.Update();
 
         if (!isSliding)
             Flip();
 
         HandleAnimations();
-        HandleSlide();
     }
 
     private void FixedUpdate()
     {
-        ApplyVariableGravity();
+        currentState.FixedUpdate();
+
         CheckGrounded();
-
-        if (!isSliding)
-        {
-            HandleMovement();
-        }
-
-        HandleJump();
     }
 
 
 
 
 
-    private void HandleMovement()
+
+    public void ChangeState(PlayerState newState)
     {
-        float targetSpeed = moveInput.x * speed;
-        rb.linearVelocity = new Vector2(targetSpeed, rb.linearVelocity.y);
-    }
+        if (currentState != null)
+            currentState.Exit();
 
-    private void HandleJump()
-    {
-        if(jumpPressed && isGrounded) {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            jumpPressed = false;
-            jumpReleased = false;
-        }
-        if (jumpReleased) {
-            if (rb.linearVelocity.y > 0)
-            {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
-            }
-            jumpReleased = false;
-        }
-    }
-
-    private void HandleSlide() 
-    {
-        if (isSliding) { 
-            slideTimer -= Time.deltaTime;
-            rb.linearVelocity = new Vector2(slideSpeed * direction, rb.linearVelocity.y);
-
-            //If we are done sliding
-            if (slideTimer <= 0) { 
-                isSliding = false;
-                slideStopTimer = slideStopDuration;
-                TryStandup();
-            }
-        }
-
-        if(slideStopTimer > 0)
-        {
-            slideStopTimer -= Time.deltaTime;
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        }
-
-        //Start the Slide
-        if (isGrounded && isCrouching && Mathf.Abs(moveInput.x) > .1f && !isSliding && !slideInputLocked)
-        {
-            isSliding = true;
-            slideInputLocked = true;
-            slideTimer = slideDuration;
-            SetColliderSlide();
-        }
-
-        if (slideStopTimer < 0 && !isCrouching)
-        {
-            slideInputLocked = false;
-        }
+        currentState = newState;
+        currentState.Enter();
     }
 
 
@@ -151,62 +118,29 @@ public class Player : MonoBehaviour
 
     void HandleAnimations()
     {
-        bool isCrouching = animator.GetBool("isCrouching");
-
-        animator.SetBool("isJumping", rb.linearVelocity.y > .1f);
-        animator.SetBool("isSliding", isSliding);
-        animator.SetBool("isCrouching", isCrouching);
-
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
-
-        bool isMoving = Mathf.Abs(moveInput.x) > .1f && isGrounded; 
-
-        animator.SetBool("isIdle", !isMoving && !isSliding && !isCrouching && !(rb.linearVelocity.y > .1f));
-        animator.SetBool("isRunning", isMoving && !isSliding && !isCrouching);
     }
 
 
 
 
-
-
-
-    void SetColliderNormal()
+    public void SetColliderNormal()
     {
        playerCollider.size = new Vector2(playerCollider.size.x, normalHeight);
        playerCollider.offset = normalOffset;
     }
 
-    void SetColliderSlide()
+    public void SetColliderSlide()
     {
         playerCollider.size = new Vector2(playerCollider.size.x, slideHeight);
         playerCollider.offset = slideOffset;
     }
 
-    void TryStandup()
-    {
-        if (isSliding)
-        {
-            animator.SetBool("isCrouching", false);
-            return;
-        }
-
-        bool shouldCrouch = isCrouching || Physics2D.OverlapCircle(headCheck.position, headCheckRadius, groundLayer);
 
 
-        if (!shouldCrouch)
-        {
-            SetColliderNormal();
-            animator.SetBool("isCrouching", false);
-        }
-        else
-        {
-            SetColliderSlide();
-            animator.SetBool("isCrouching", true);
-        }
-    }
 
-    void ApplyVariableGravity()
+
+    public void ApplyVariableGravity()
     {
         if(rb.linearVelocity.y < -0.1f) { 
             rb.gravityScale = fallGravity;
@@ -219,10 +153,21 @@ public class Player : MonoBehaviour
         }
     }
 
+
+
+
     void CheckGrounded()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
     }
+
+    public bool CheckForCeiling()
+    {
+        return Physics2D.OverlapCircle(headCheck.position, headCheckRadius, groundLayer);
+    }
+
+
+
 
     void Flip()
     {
@@ -237,7 +182,6 @@ public class Player : MonoBehaviour
 
         transform.localScale = new Vector3(direction, 1, 1);
     }
-
 
 
 
@@ -266,6 +210,8 @@ public class Player : MonoBehaviour
         }
     }
     
+
+
 
     private void OnDrawGizmosSelected()
     {
