@@ -5,9 +5,11 @@ public abstract class PlayerState
     protected Player player;
     protected Animator animator;
     protected Rigidbody2D rb;
+    protected Combat combat;
 
     protected bool JumpPressed { get => player.jumpPressed; set => player.jumpPressed = value; }
     protected bool JumpReleased { get => player.jumpReleased; set => player.jumpReleased = value; }
+    protected bool AttackPressed  => player.attackPressed;
     protected Vector2 MoveInput => player.moveInput;
 
     public PlayerState (Player player)
@@ -15,6 +17,7 @@ public abstract class PlayerState
         this.player = player;
         this.animator = player.animator;
         this.rb = player.rb;
+        combat = player.combat;
     }
 
 
@@ -23,4 +26,6 @@ public abstract class PlayerState
 
     public virtual void Update() { }
     public virtual void FixedUpdate() { }
+
+    public virtual void AttackAnimationFinished() { }
 }

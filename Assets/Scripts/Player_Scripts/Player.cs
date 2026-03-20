@@ -10,6 +10,11 @@ public class Player : MonoBehaviour
     public PlayerMoveState moveState;
     public PlayerCrouchState crouchState;
     public PlayerSlideState slideState;
+    public PlayerAttackState attackState;
+
+    [Header("Core Components")]
+    public Combat combat;
+
 
 
     [Header("Components")]
@@ -17,6 +22,8 @@ public class Player : MonoBehaviour
     public PlayerInput playerInput;
     public Animator animator;
     public CapsuleCollider2D playerCollider;
+
+
 
     [Header("Movement Variables")]
     public float speed;
@@ -32,6 +39,8 @@ public class Player : MonoBehaviour
     public Vector2 moveInput;
     public bool jumpPressed;
     public bool jumpReleased;
+    public bool attackPressed;
+    
     
 
     [Header("Ground Check")]
@@ -45,7 +54,7 @@ public class Player : MonoBehaviour
     [Header("Crouch Settings")]
     public Transform headCheck;
     public float headCheckRadius = .2f;
-
+    public bool isCrouching;
 
 
     [Header("Slide Settings")]
@@ -61,8 +70,6 @@ public class Player : MonoBehaviour
     private bool isSliding;
 
 
-    public bool isCrouching;
-
 
     private void Awake()
     {
@@ -71,6 +78,7 @@ public class Player : MonoBehaviour
         moveState = new PlayerMoveState(this);
         crouchState = new PlayerCrouchState(this);
         slideState = new PlayerSlideState(this);
+        attackState = new PlayerAttackState(this);
     }
 
 
@@ -183,7 +191,10 @@ public class Player : MonoBehaviour
         transform.localScale = new Vector3(direction, 1, 1);
     }
 
-
+    public void AttackAnimationFinished()
+    {
+        currentState.AttackAnimationFinished();
+    }
 
 
     public void OnMove(InputValue value)
@@ -202,14 +213,21 @@ public class Player : MonoBehaviour
     public void OnJump (InputValue value)
     {
         if (value.isPressed) {
-            jumpPressed = true;
+            if(isGrounded && !CheckForCeiling())
+                jumpPressed = true;
+
             jumpReleased = false;
         }
         else { 
             jumpReleased = true;
         }
     }
-    
+
+    public void OnAttack (InputValue value)
+    {
+        attackPressed = value.isPressed;
+    }
+
 
 
 

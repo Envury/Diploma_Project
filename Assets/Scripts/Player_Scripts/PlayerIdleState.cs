@@ -8,14 +8,16 @@ public class PlayerIdleState : PlayerState
     public override void Enter()
     {
         animator.SetBool("isIdle", true);
-        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
     }
 
     public override void Update()
     {
         base.Update();
 
-        if (JumpPressed)
+        if (AttackPressed && combat.CanAttack)
+            player.ChangeState(player.attackState);
+
+        else if (JumpPressed)
         {
             JumpPressed = false;
             player.ChangeState(player.jumpState);
@@ -29,6 +31,7 @@ public class PlayerIdleState : PlayerState
             player.ChangeState(player.crouchState);
         }
 
+        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
     }
 
     public override void Exit()
