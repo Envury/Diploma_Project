@@ -1,24 +1,25 @@
-18/03: 
--1 complete level
--Enemy scripts with memory
--enemyFightStyle class 
-	
+29/04:
+-Complete the enemy scripts
+-have 2 more levels with level transitions
 
 
 
 final showcase:
 -3 complete level
 -3 Enemy scripts types
--1 enemy controller script (enemyFightStyle class) 
+-1 enemy controller script (enemyFightStyle class or something) 
 -save/load systems
 -logging system
-Economics part
-Enviormental Protection part
-Workplace Safety part
+
 
 
 nice-to-haves:
 procedurally generated levels
-background using NPUA buildings
-login system
+Loot and currency system
+
+
+WORK TO BE CONTINUED AFTER THE FINAL SHOWCASE FOR THE DIPLOMA
+
+This is going to turn into a passion project of mine
+
 
