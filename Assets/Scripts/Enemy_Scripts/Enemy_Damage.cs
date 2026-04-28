@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Enemy_Damage : MonoBehaviour
 {
-    public Animator animator;
+    [SerializeField] private Enemy enemy;
     public Health health;
 
     [Header("Death FX")]
@@ -26,14 +26,18 @@ public class Enemy_Damage : MonoBehaviour
 
 
 
-    private void HandleDamage()
+    private void HandleDamage(Vector2 sourcePosition)
     {
-        animator.SetTrigger("isDamaged");
+        int knockbackDir = 0;
+        knockbackDir = transform.position.x > sourcePosition.x ? 1 : -1;
+
+        enemy.StateMachine.ChangeState(new DamagedState(enemy, knockbackDir));
     }
 
-    private void HandleDeath()
+    private void HandleDeath(Vector2 sourcePosition)
     {
-        foreach(GameObject prefab in deathParts)
+        // For the dummy in spawn. Need to optimize this later.
+        foreach (GameObject prefab in deathParts)
         {
             Quaternion rotation = Quaternion.Euler(0, 0, Random.Range(0.5f, 1)).normalized;
             GameObject part = Instantiate(prefab, transform.position, rotation);
@@ -47,6 +51,9 @@ public class Enemy_Damage : MonoBehaviour
             Destroy(part, lifetime);
         }
         
-        Destroy(gameObject);
+        //For all other enemies.
+        enemy.StateMachine.ChangeState(new DeathState(enemy));
     }
+
+    private void Die() { Destroy(gameObject); }
 }

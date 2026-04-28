@@ -9,11 +9,15 @@ public class Player : MonoBehaviour
     public PlayerJumpState jumpState;
     public PlayerMoveState moveState;
     public PlayerCrouchState crouchState;
+    public PlayerDamagedState damagedState;
+    public PlayerDeathState deathState;
     public PlayerSlideState slideState;
     public PlayerAttackState attackState;
 
     [Header("Core Components")]
     public Combat combat;
+    public Damage damage;
+    public Health health;
 
 
 
@@ -79,6 +83,8 @@ public class Player : MonoBehaviour
         crouchState = new PlayerCrouchState(this);
         slideState = new PlayerSlideState(this);
         attackState = new PlayerAttackState(this);
+        damagedState = new PlayerDamagedState(this);
+        deathState = new PlayerDeathState(this);
     }
 
 
@@ -179,6 +185,9 @@ public class Player : MonoBehaviour
 
     void Flip()
     {
+        if(currentState == deathState)
+            return;
+
         if (moveInput.x > 0.1f)
         {
             direction = 1;
