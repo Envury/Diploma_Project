@@ -30,5 +30,7 @@ MonoBehaviour:
   meleeRange: 0.5
   meleeDamage: 10
   meleeCooldown: 1
+  dodgeSpeed: 10
+  dodgeDuration: 0.1
   knockbackDuration: 0.3
   knockbackForce: 12

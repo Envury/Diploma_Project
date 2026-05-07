@@ -1,4 +1,7 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Enemy_Combat : MonoBehaviour
 {
@@ -7,13 +10,22 @@ public class Enemy_Combat : MonoBehaviour
     private EnemyConfig config;
     private Enemy enemy;
     private float lastAttackTime;
+    private StateMachine stateMachine;
 
     private void Start()
     {
         enemy = GetComponent<Enemy>();
         config = enemy.Config;
+        stateMachine = enemy.StateMachine;
     }
 
+    private void Update()
+    {
+        if(Keyboard.current.qKey.isPressed)
+        {
+            PreformDodge();
+        }
+    }
     public bool CanMeleeAttack() => Time.time >= lastAttackTime + config.meleeCooldown;
 
     public void PreformMeleeAttack()
@@ -28,5 +40,10 @@ public class Enemy_Combat : MonoBehaviour
         Health health = hit.GetComponentInChildren<Health>();
         if (health != null)
             health.ChangeHealth(-config.meleeDamage, transform.position);
+    }
+
+    public void PreformDodge()
+    {
+        stateMachine.ChangeState(new DodgeState(enemy));
     }
 }
