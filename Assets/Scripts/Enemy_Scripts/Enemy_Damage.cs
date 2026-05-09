@@ -11,6 +11,7 @@ public class Enemy_Damage : MonoBehaviour
     [SerializeField] private float torque = 5f;
     [SerializeField] private float lifetime = 2;
 
+
     private void OnEnable()
     {
         health.OnDamaged += HandleDamage;
@@ -32,6 +33,8 @@ public class Enemy_Damage : MonoBehaviour
         knockbackDir = transform.position.x > sourcePosition.x ? 1 : -1;
 
         enemy.StateMachine.ChangeState(new DamagedState(enemy, knockbackDir));
+        enemy.Combat.stateQueue.Enqueue(0);
+        enemy.Combat.stateQueue.Dequeue();
     }
 
     private void HandleDeath(Vector2 sourcePosition)
